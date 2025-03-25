@@ -1,0 +1,101 @@
+Полный список мороженого на главной странице
+
+На SQL этот запрос выглядел бы так:
+SELECT *
+FROM <имя таблицы>; 
+Но у нас есть Django ORM, так что запрос делаем не на SQL, а на Python:
+# homepage/views.py
+from django.shortcuts import render
+
+from ice_cream.models import IceCream
+
+def index(request):
+    template_name = 'homepage/index.html'
+    # Запрос:
+    ice_cream_list = IceCream.objects.all()
+    # Полученный из БД QuerySet передаём в словарь контекста:
+    context = {
+        'ice_cream_list': ice_cream_list,
+    }
+    # Словарь контекста передаём в шаблон, рендерим HTML-страницу:
+    return render(request, template_name, context) 
+
+
+Это нормально. До тех пор, пока информация из БД не запрошена в шаблоне или 
+каким-то ещё образом, — запросы не отправляются. 
+А сейчас в шаблоне index.html никакие данные из словаря context не выводятся. В 
+такой ситуации Django рассуждает так: «зачем делать запрос, если информация 
+никому не нужна?». Это называется «ленивые запросы»: не пнёшь — не полетят.
+
+
+Запрос будет отправлен, если в шаблоне будут запрошены данные из словаря 
+context; добавим в HTML-шаблон переменную из этого словаря:
+ <!-- templates/homepage/index.html -->
+...
+
+<h1 class="pb-2 mb-0">Главная страница</h1>
+{{ ice_cream_list }}
+
+
+Прямо в шаблоне можно проитерироваться по QuerySet, получить свойства каждого объекта и вывести их на страницу, например, в виде HTML-списка: 
+<!-- templates/homepage/index.html -->
+...
+
+{% for ice_cream in ice_cream_list %}
+  <ul>
+    <li>ID: {{ ice_cream.id }}</li>
+    <li>Опубликовано: {{ ice_cream.is_published }}</li>
+    <li>На главную: {{ ice_cream.is_on_main }}</li>
+    <li>Название: {{ ice_cream.title }}</li>
+    <li>Описание: {{ ice_cream.description }}</li>
+    <li>FK wrapper: {{ ice_cream.wrapper_id }}</li>
+    <li>FK category: {{ ice_cream.category_id }}</li>
+  </ul>
+{% endfor %} 
+
+
+
+Метод values(): берём только нужное
+
+Ограничим количество столбцов, попадающих в выборку. В SQL следовало бы сделать 
+так:
+
+SELECT <столбец1>, <столбец2>
+FROM <имя таблицы>; 
+
+А в Django ORM поля, которые нужно получить из БД, перечисляются в аргументах 
+метода .values(): 
+
+<Название модели>.objects.values('<свойство1>', '<свойство2>') 
+
+
+Обновите код view-функции:
+# homepage/views.py
+
+
+from django.shortcuts import render
+
+from ice_cream.models import IceCream
+
+def index(request):
+    template_name = 'homepage/index.html'
+    # Возьмём нужное. А ненужное не возьмём:
+    ice_cream_list = IceCream.objects.values('id', 'title')
+    context = {
+        'ice_cream_list': ice_cream_list,
+    }
+    return render(request, template_name, context) 
+
+
+
+    Измените шаблон, чтобы наблюдать за результатами не только в Django Debug 
+    Toolbar, но и на странице проекта:
+<!-- templates/homepage/index.html -->
+...
+
+{% for ice_cream in ice_cream_list %}
+  <ul>
+    <li>ID: {{ ice_cream.id }}</li>
+    <li>Название: {{ ice_cream.title }}</li>
+  </ul>
+{% endfor %} 

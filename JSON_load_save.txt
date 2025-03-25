@@ -1,0 +1,17 @@
+Активируйте виртуальное окружение, перейдите в каталог с manage.py и выполните команду для загрузки фикстур в БД:
+python manage.py loaddata db.json 
+
+
+Выгружаем данные всех моделей из БД:
+python manage.py dumpdata -o db.json  
+Или только данные из приложения ice_cream:
+python manage.py dumpdata ice_cream -o ice_cream.json 
+А можно сохранить только данные из отдельной таблицы:
+# Сохраняем данные модели icecream приложения ice_cream:
+python manage.py dumpdata ice_cream.icecream -o ice_cream_icecream.json 
+
+
+Можно экспортировать данные из нескольких моделей, для этого их названия перечисляются через пробел после команды dumpdata.
+Есть возможность экспортировать все таблицы за исключением перечисленных:
+# Сохраняем все данные из проекта, кроме данных модели icecream приложения ice_cream:
+python manage.py dumpdata --exclude ice_cream.icecream -o without_ice_cream_icecream.json 

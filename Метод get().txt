@@ -1,0 +1,110 @@
+Вместо метода .filter() применим метод .get():
+
+# ice_cream/views.py
+from django.shortcuts import render
+
+from ice_cream.models import IceCream
+
+def ice_cream_detail(request, pk):
+    template_name = 'ice_cream/detail.html'
+    # Вызываем .get() и в его параметрах указываем условия фильтрации:
+    ice_cream = IceCream.objects.get(pk=pk)
+    context = {
+        'ice_cream': ice_cream,
+    }
+    return render(request, template_name, context)
+
+... 
+
+
+
+Функция get_object_or_404()
+
+Если методом .get() запросить из базы несуществующий объект — Django выбросит 
+исключение DoesNotExist: IceCream matching query does not exist. 
+
+
+Перед применением функции get_object_or_404() необходимо её импортировать.
+from django.shortcuts import get_object_or_404, render
+
+from ice_cream.models import IceCream
+
+def ice_cream_detail(request, pk):
+    template_name = 'ice_cream/detail.html'
+    # Отфильтруй объект модели IceCream, 
+    # у которого pk равен значению переменной из пути.
+    # Если такого объекта не существует - верни 404 ошибку:
+    ice_cream = get_object_or_404(IceCream, pk=pk)
+    context = {
+        'ice_cream': ice_cream,
+    }
+    return render(request, template_name, context) 
+
+
+
+    В get_object_or_404() первым аргументом можно предать не только имя модели, 
+    но и QuerySet, этим можно воспользоваться для предварительной фильтрации 
+    объектов и для ограничения списка полей, которые вернутся в ответе на 
+    запрос.  
+
+
+
+    В get_object_or_404() первым аргументом можно предать не только имя модели, 
+    но и QuerySet, этим можно воспользоваться для предварительной фильтрации 
+    объектов и для ограничения списка полей, которые вернутся в ответе на 
+    запрос.  
+
+На примере будет нагляднее. В шаблоне страницы, описывающей отдельный сорт 
+мороженого, нужны только поля title и description; получение данных для этой 
+страницы может выглядеть так:
+
+
+from django.shortcuts import get_object_or_404, render
+
+from ice_cream.models import IceCream
+
+def ice_cream_detail(request, pk):
+    template_name = 'ice_cream/detail.html'
+
+    # Из модели IceCream получаем QuerySet, содержащий только
+    # поля 'title' и 'description' всех записей.
+    # Из этого QuerySet получаем запись, 
+    # у которой значение поля pk равно значению пременной pk, 
+    # полученной в аргументе view-функции.
+    # Если объекта с указанным pk не существует - вернётся страница с ошибкой 404:
+
+    ice_cream = get_object_or_404(
+        # Первый аргумент - QuerySet:
+        IceCream.objects.values('title', 'description'),
+        # Второй аргумент - условие, по которому фильтруются записи из QuerySet:
+        pk=pk
+    )
+    context = {
+        'ice_cream': ice_cream,
+    }
+    return render(request, template_name, context)
+
+... 
+
+
+
+При получении списка объектов можно применить похожую функцию — 
+get_list_or_404(). Логика работы этой функции проста: если по запросу получен 
+список, в котором есть хоть один объект, — возвращаем этот список; если список 
+пуст — выбрасываем исключение Http404. Исключение, как и в случае с 
+get_object_or_404(), будет перехвачено и обработано.
+
+
+
+Получить первый или последний объект из QuerySet: методы .first() и .last()
+
+Ещё один способ вернуть отдельный объект — получить QuerySet и методом .first() 
+или  .last() получить из него, соответственно, первый или последний объект. 
+# Такой вызов вернёт первый элемент из QuerySet
+
+IceCream.objects.filter(is_published=True).order_by('pk').first() 
+
+Методы .first() и .last() нужно применять только к отсортированным QuerySet. 
+Если последовательность не отсортирована — результат может быть неожиданным: 
+без сортировки сложно угадать, какой объект будет первым в наборе, а какой — 
+последним.

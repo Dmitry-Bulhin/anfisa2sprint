@@ -1,0 +1,67 @@
+Устанавливаем Django Debug Toolbar
+Сторонние приложения устанавливаются в виртуальное окружение через менеджер 
+пакетов pip, вы уже работали с ним. Активируйте виртуальное окружение и 
+выполните команду
+
+pip3 install "django-debug-toolbar<4.0"
+
+Сразу добавьте DjDT в список пакетов, используемых в проекте. Список 
+зависимостей хранят в файле requirements.txt, как правило — в корневой папке 
+проекта.
+Для обновления списка пакетов перейдите в корневую папку проекта и 
+(при запущенном виртуальном окружении конечно же) выполните команду 
+
+pip freeze > requirements.txt 
+
+После установки любого нового пакета выполняйте pip freeze > requirements.txt, 
+тогда любой программист сможет легко установить зависимости, нужные в проекте.
+
+
+
+После установки приложения зарегистрируйте и настройте приложение DjDT в **файле anfisa_for_friends/settings.py:
+# anfisa_for_friends/settings.py
+
+...
+
+INSTALLED_APPS = [
+    # В проекте уже зарегистрировано несколько приложений.
+    ...
+    # Регистрируем новое приложение в проекте:
+    # обязательно ниже, чем django.contrib.staticfiles.
+    'debug_toolbar',
+]
+
+# MIDDLEWARE — список промежуточных программных слоёв, подключённых к проекту.
+# DebugToolbarMiddleware будет обрабатывать информацию из запросов
+# и отображать её в панели Django Debug Toolbar.
+# Добавьте DebugToolbarMiddleware в самый конец списка.
+MIDDLEWARE = [
+    ...
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
+# Добавьте в settings.py эту константу, чтобы DjDT знал,
+# запросы с каких IP он должен обрабатывать.
+INTERNAL_IPS = [
+    '127.0.0.1',
+] 
+
+
+
+
+Последний штрих: в головной файл anfisa_for_friends/urls.py добавьте новое 
+правило для режима отладки:
+# anfisa_for_friends/urls.py
+# Импортируем информацию из настроек.
+
+...
+
+from django.conf import settings
+
+urlpatterns = ...
+
+# Если проект запущен в режиме разработки...
+if settings.DEBUG:
+    import debug_toolbar
+    # Добавить к списку urlpatterns список адресов из приложения debug_toolbar:
+    urlpatterns += (path('__debug__/', include(debug_toolbar.urls)),) 

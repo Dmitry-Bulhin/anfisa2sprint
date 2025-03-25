@@ -1,0 +1,131 @@
+Создайте новую запись в таблице ice_cream_category в базе данных с помощью метода .create():
+# Импортируем модель, с которой планируем работать.
+>>> from ice_cream.models import Category
+
+# Cоздаём объект, передаём значения атрибутов. 
+# Поля со значениями по умолчанию не заполняем: пусть это сделает Django ORM.
+# В поле id тоже не передаём значение.
+>>> Category.objects.create(title='Категория, созданная через shell', slug='shell_category')
+
+# По нажатию Enter этот код выполнится, и на основе значений, 
+# переданных в метод create(), будет создана новая запись в БД.
+# О чём и будет сообщено вот такой строкой.
+<Category: Category object (1)> 
+
+
+Создадим ещё одну запись в БД:
+# Обращаемся к интерфейсу objects модели Category и вызываем метод .create():
+>>> Category.objects.create(is_published=False, title='Ещё одна категория, созданная через shell', slug='one_more_shell_category', output_order=90)
+# Получаем подтверждение:
+
+
+
+
+Запросим все объекты модели Category — для этого применяется метод .all():
+# Модели уже импортированы (если вы не закрывали консоль), 
+# повторно их импортировать не надо: Shell всё помнит!
+>>> categories = Category.objects.all()
+
+# Что в переменной categories?
+>>> categories
+
+# Django shell сообщает, что QuerySet содержит два объекта модели Category с pk 1 и 2:
+<QuerySet [<Category: Category object (1)>, <Category: Category object (2)>]> 
+
+
+
+# Найти все объекты, значение поля is_published у которых равно True: 
+# Получившийся результат можно не присваивать переменной, 
+# а сразу вывести в консоль: 
+>>> Category.objects.filter(is_published=True)
+<QuerySet [<Category: Category object (1)>]>
+# Вернулся QuerySet, в котором хранится один объект модели Category (с pk=1) 
+
+
+
+Чтобы получить отдельный объект, а не QuerySet, применяют метод .get(). 
+Django ORM по умолчанию создаёт во всех таблицах поле с первичным ключом, и по этому ключу можно получить из БД нужную запись:
+
+>>> category = Category.objects.get(pk=1)
+>>> category
+# Получаем <Объект> модели Category с указанным в запросе pk:
+<Category: Category object (1)> 
+
+Значения полей записи преобразовались в атрибуты объекта, и к ним можно обратиться стандартным в Python способом, через точечную нотацию: 
+# Проверим, какой id присвоен новому объекту в базе:
+>>> category.id  # Нажимаем Enter, и Shell возвращает значение:
+1
+
+# Или через псевдоним
+>>> category.pk
+1
+
+# А что в поле title?
+>>> category.title
+'Категория, созданная через shell'
+
+# А в поле slug?
+>>> category.slug
+'shell_category'
+
+# А вот что в полях is_published и output_order:
+>>> category.is_published
+True
+>>> category.output_order
+100 
+
+
+
+
+
+Обновление информации (Update)
+
+Изменить объект можно двумя способами.
+Можно получить коллекцию объектов (запросить все объекты или отфильтровать их по какому-то параметру) — и присвоить одному или нескольким полям этих объектов новые значения:
+# Category.objects.all() возвращает QuerySet со всеми объектами модели,
+# а метод update() меняет свойства всех объектов:
+
+>>> Category.objects.all().update(title='Изменённое поле категории', is_published=True)
+# В ответ получим количество изменённых записей
+2 
+
+
+А можно пойти другим путём: получить объект, присвоить новое значение одному из его полей и вызвать метод .save():
+# Получаем объект и сохраняем его в переменную category_for_change:
+>>> category_for_change = Category.objects.get(pk=1)
+# Меняем значение одного из полей: 
+>>> category_for_change.title = 'Ещё раз изменённое поле категории'
+>>> category_for_change.is_published = False
+# Новое значение присвоено объекту модели, но в БД всё ещё хранится старое значение.
+# Чтобы отправить новое значение в базу данных — вызываем метод save():
+>>> category_for_change.save()
+
+# Смотрим информацию из обновлённых полей:
+>>> Category.objects.get(pk=1).title 
+'Ещё раз изменённое поле категории'
+>>> Category.objects.get(pk=1).is_published
+False
+# Ура, получилось! 
+
+
+
+
+Удаление записи (Delete)
+
+Удалим все созданные в этом уроке записи в БД:
+>>> category_for_delete = Category.objects.get(pk=1)
+>>> category_for_delete.delete()
+# Будет выведено
+(1, {'ice_cream.Category': 1})
+>>> category_for_delete = Category.objects.get(pk=2)
+>>> category_for_delete.delete()
+# Будет выведено
+(1, {'ice_cream.Category': 1})
+
+# Проверяем, что объекты действительно удалились:
+>>> Category.objects.all()
+<QuerySet []>
+# Совсем пусто: нет ни одного объекта класса Category.  
+А можно удалить все объекты оптом:
+# Получаем QuerySet и удаляем все содержащиеся в нём объекты:
+>>> Category.objects.all().delete() 

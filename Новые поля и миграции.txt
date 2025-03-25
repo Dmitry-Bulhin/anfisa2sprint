@@ -1,0 +1,67 @@
+Начнём с изменения структуры базы данных. Поле output_order уже есть в модели 
+Category, и его можно просто скопировать в модель IceCream:
+class IceCream(PublishedModel):
+    ...
+
+    output_order = models.PositiveSmallIntegerField(
+        default=100,
+        verbose_name='Порядок отображения'
+    )
+
+    ... 
+
+
+
+Новые view-функции и шаблоны
+
+Начнем работу с главной страницы — с шаблона index.html. 
+<!-- index.html -->
+{% extends "base.html" %}
+{% block title %}
+  Анфиса для друзей. Главная
+{% endblock %}
+{% block content %}
+  <h1 class="pb-2 mb-0">Главная страница</h1>
+  <div class="row">
+    {% for ice_cream in ice_cream_list %}
+      {% include "includes/ice_cream_card.html" %}
+    {% endfor %}
+  </div>
+{% endblock %} 
+
+В коде шаблона страницы нужна только одна переменная — QuerySet ice_cream_list. К шаблону также подключена карточка мороженого, которая вынесена в отдельный файл ice_cream_card.html.
+<!-- ice_cream_card.html -->
+{% load static %}
+<div class="col-6 col-md-4 my-1">
+    <div class="card">
+      <img 
+        class="img-fluid card-img-top" 
+        height="400" width="300"
+        src="{% static 'img/image-holder.png' %}"
+      >
+      <div class="card-body">           
+        <h5 class="card-title">{{ ice_cream.title }} </h5>
+        <p class="badge bg-secondary">{{ ice_cream.price }}</p>
+        <p class="card-text">{{ ice_cream.description|truncatechars:40 }}</p>
+        <a class="mt-3 regular-link" href="{% url 'ice_cream:ice_cream_detail' ice_cream.id %}">
+          Подробнее -->
+        </a>
+      </div>
+    </div>
+  </div> 
+
+
+  Из HTML-кода видно, что для каждого мороженого из БД понадобится запросить 
+  такие поля:
+
+id
+title
+price
+description
+
+Также в запросе необходимо добавить проверку флагов
+
+is_published для сорта мороженого,
+is_published для категории,
+is_on_main для сорта мороженого.
+
